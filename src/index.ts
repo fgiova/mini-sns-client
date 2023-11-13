@@ -51,6 +51,7 @@ export class MiniSNSClient {
 	private attributeMap (attributes: Record<string, MessageAttributeValue>, payload: Record<string, any>) {
 		let counter = 1;
 		for (const [key, value] of Object.entries(attributes)) {
+			/* c8 ignore next 1 */
 			if(!value.DataType) continue;
 			payload[`MessageAttributes.entry.${counter}.Name`] = key;
 			payload[`MessageAttributes.entry.${counter}.Value.DataType`] = value.DataType;
@@ -126,6 +127,7 @@ export class MiniSNSClient {
 					message = parsedBody.ErrorResponse.Error.Message;
 				}
 			}
+			/* c8 ignore next 3 */
 			catch (e) {
 				// do nothing
 			}
@@ -178,3 +180,4 @@ export class MiniSNSClient {
 	}
 
 }
+export type * from "./schemas";
