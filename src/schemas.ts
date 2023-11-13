@@ -216,13 +216,13 @@ export interface PublishBatchRequestEntry {
 	 *                 accepted: alphanumeric characters, hyphens(-), and underscores (_). </p>
 	 *          </note>
 	 */
-	Id: string | undefined;
+	Id: string;
 
 	/**
 	 * @public
 	 * <p>The body of the message.</p>
 	 */
-	Message: string | undefined;
+	Message: string;
 
 	/**
 	 * @public
@@ -386,7 +386,6 @@ export interface PublishBatchResultEntry {
 	SequenceNumber?: string;
 }
 
-*/
 export interface BatchResultErrorEntry {
 	/**
 	 * @public

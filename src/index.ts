@@ -1,13 +1,18 @@
 import {Pool} from "undici";
 import * as txml from "txml";
 import {HttpRequest, Signer, SignerOptions} from "@fgiova/aws-signature";
-import {MessageAttributeValue, PublishBatchMessage, PublishBatchResponse, PublishMessage, SNSActions} from "./schemas";
+import {
+	MessageAttributeValue,
+	PublishBatchMessage,
+	PublishBatchResponse,
+	PublishMessage,
+	PublishResponse,
+	SNSActions
+} from "./schemas";
 
 export class MiniSNSClient {
 	private readonly topicSettings: {
 		region: string,
-		accountId: string,
-		topicName: string,
 		host: string,
 		endpoint: string
 	};
@@ -15,9 +20,15 @@ export class MiniSNSClient {
 	private readonly undiciOptions: Pool.Options;
 	private readonly signer: Signer;
 
-	constructor (topicARN: string, endpoint?: string, undiciOptions?: Pool.Options, signer?: Signer | SignerOptions) {
+	constructor (region: string, endpoint?: string, undiciOptions?: Pool.Options, signer?: Signer | SignerOptions) {
 		this.undiciOptions = undiciOptions;
-		this.topicSettings = this.getTopicARN(topicARN, endpoint);
+		endpoint = endpoint ?? `https://sns.${region}.amazonaws.com`;
+		const url = new URL(endpoint);
+		this.topicSettings = {
+			region,
+			host: url.host,
+			endpoint
+		}
 		this.pool = new Pool(this.topicSettings.endpoint, this.undiciOptions);
 		if (signer instanceof Signer) {
 			this.signer = signer;
@@ -27,19 +38,6 @@ export class MiniSNSClient {
 		}
 		else {
 			this.signer = new Signer();
-		}
-	}
-
-	private getTopicARN (topicARN: string, endpoint?: string) {
-		const [topicName, accountId, region] = topicARN.split(":").reverse();
-		endpoint = endpoint ?? `https://sns.${region}.amazonaws.com`;
-		const url = new URL(endpoint);
-		return {
-			region,
-			accountId,
-			topicName,
-			host: url.host,
-			endpoint
 		}
 	}
 
@@ -86,8 +84,18 @@ export class MiniSNSClient {
 		return txml.simplify(txml.parse(response));
 	}
 
+	private parseBatchResponseResult (response: any) {
+		if(!response) return undefined;
+		if (Array.isArray(response.member)) {
+			return response.member
+		}
+		else {
+			return [response.member];
+		}
+	}
+
 	private async SNSRequest<B,R>(body: B, action: SNSActions) {
-		const {region, accountId, topicName, host} = this.topicSettings;
+		const {region, host} = this.topicSettings;
 		const requestBody = this.encodeBody({
 			...body,
 			Action: action
@@ -99,13 +107,12 @@ export class MiniSNSClient {
 				"Host": host,
 			},
 			body: requestBody
-		}, "sqs", region);
-
+		}, "sns", region);
 		const response = await this.pool.request({
 			path: "/",
 			method: requestData.method,
 			headers: {
-				"Content-Type": "www-form-urlencoded",
+				"Content-Type": "application/x-www-form-urlencoded",
 				"Content-length": Buffer.byteLength(requestBody).toString(),
 				...requestData.headers
 			},
@@ -115,8 +122,8 @@ export class MiniSNSClient {
 			let message = await response.body.text();
 			try {
 				const parsedBody = this.parseResponse(message);
-				if(parsedBody.message){
-					message = parsedBody.message;
+				if(parsedBody.ErrorResponse && parsedBody.ErrorResponse.Error && parsedBody.ErrorResponse.Error.Message){
+					message = parsedBody.ErrorResponse.Error.Message;
 				}
 			}
 			catch (e) {
@@ -132,7 +139,13 @@ export class MiniSNSClient {
 			this.attributeMap(payload.MessageAttributes, payload);
 			delete payload.MessageAttributes;
 		}
-		return this.SNSRequest<PublishMessage, {PublishResponse: {MessageId: string}}>(payload, "Publish");
+		const result = await this.SNSRequest<PublishMessage, {PublishResponse: {
+				PublishResult: {MessageId: string, SequenceNumber?:string}
+				}}>(payload, "Publish");
+		return {
+			MessageId: result.PublishResponse.PublishResult.MessageId,
+			SequenceNumber: result.PublishResponse.PublishResult.SequenceNumber
+		} as PublishResponse;
 	}
 
 	async publishMessageBatch (payload: PublishBatchMessage) {
@@ -145,7 +158,7 @@ export class MiniSNSClient {
 			}
 			messages.push(message);
 		}
-		let member = 0;
+		let member = 1;
 		for (const message of messages) {
 			for (const [key, value] of Object.entries(message)) {
 				entries[`PublishBatchRequestEntries.member.${member}.${key}`] = value;
@@ -153,12 +166,15 @@ export class MiniSNSClient {
 			}
 			member++;
 		}
-		return this.SNSRequest<Record<string, any>, PublishBatchResponse>({
+		const result = await this.SNSRequest<Record<string, any>, any>({
 			...entries,
 			TopicArn: payload.TopicArn,
 		}, "PublishBatch");
+
+		return {
+			Successful: this.parseBatchResponseResult(result.PublishBatchResponse.PublishBatchResult.Successful),
+			Failed: this.parseBatchResponseResult(result.PublishBatchResponse.PublishBatchResult.Failed)
+		} as PublishBatchResponse;
 	}
-
-
 
 }
