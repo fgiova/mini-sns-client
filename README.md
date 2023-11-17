@@ -67,6 +67,7 @@ MiniSNSClient.publishMessageBatch(message: PublishBatchMessage): Promise<Publish
 ```
 
 All types are defined in [schemas.ts](./src/schemas.ts) and are derived from the [AWS SNS API](https://docs.aws.amazon.com/sns/latest/api/API_Operations.html)
+The main difference is that batch operations are not limited to 10 items, but accept any number of items and provide for running the batches needed to exhaust the total number of items.
 
 ## License
 Licensed under [MIT](./LICENSE).

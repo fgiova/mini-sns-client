@@ -261,6 +261,137 @@ test("MiniSNSClient", { only: true }, async (t) => {
 		t.same(result.Successful[0].Id, messagBatch.PublishBatchRequestEntries[0].Id);
 		t.same(result.Successful[1].Id, messagBatch.PublishBatchRequestEntries[1].Id);
 	});
+	await t.test("publishMessage batch multiple item > 10", async (t) => {
+		const { mockPool, client }  = t.context;
+		function splitArray<T>(items: T[], maxItems = 10): T[][]{
+			return items.reduce((resultArray, item, index) => {
+				const chunkIndex = Math.floor(index/10);
+				if(!resultArray[chunkIndex]) {
+					resultArray[chunkIndex] = []; // start a new chunk
+				}
+				resultArray[chunkIndex].push(item);
+
+				return resultArray;
+			}, []);
+		}
+
+		const messages: PublishBatchMessage["PublishBatchRequestEntries"] = [];
+		const mockResponses: {MessageId: string, Id:string}[] = [];
+		for(let i = 0; i < 15; i++){
+			const message: PublishBatchMessage["PublishBatchRequestEntries"][0] = {
+				Id: randomUUID(),
+				Message: `Hello World ${i}!`
+			}
+			messages.push(message);
+			mockResponses.push({
+				Id: message.Id,
+				MessageId: randomUUID()
+			})
+		}
+
+		const responsesChunks = splitArray(mockResponses);
+
+		mockPool.intercept({
+			path: "/",
+			method: "POST",
+			body: (body: string) => {
+				const entries = body.split("&").filter(item => {
+					return item.match(/^PublishBatchRequestEntries\.member\.\d+\.Id=/);
+				});
+				const entriesIds = entries.map(item => item.split("=")[1]);
+				const entriesIdsSorted = entriesIds.sort();
+				const messagesChunksIdsSorted = responsesChunks[0].map(item => item.Id).sort();
+				return JSON.stringify(entriesIdsSorted) === JSON.stringify(messagesChunksIdsSorted);
+			}
+		}).reply(200, `<PublishBatchResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">
+  <PublishBatchResult>
+    <Failed/>
+    <Successful>${responsesChunks[0].map((chunk, index) => 
+      `<member>
+        <MessageId>${randomUUID()}</MessageId>
+        <Id>${chunk.Id}</Id>
+      </member>`)
+	}
+    </Successful>
+  </PublishBatchResult>
+  <ResponseMetadata>
+    <RequestId>${randomUUID()}</RequestId>
+  </ResponseMetadata>
+</PublishBatchResponse>`);
+		mockPool.intercept({
+			path: "/",
+			method: "POST",
+			body: (body: string) => {
+				const entries = body.split("&").filter(item => {
+					return item.match(/^PublishBatchRequestEntries\.member\.\d+\.Id=/);
+				});
+				const entriesIds = entries.map(item => item.split("=")[1]);
+				const entriesIdsSorted = entriesIds.sort();
+				const messagesChunksIdsSorted = responsesChunks[1].map(item => item.Id).sort();
+				return JSON.stringify(entriesIdsSorted) === JSON.stringify(messagesChunksIdsSorted);
+			}
+		}).reply(200, `<PublishBatchResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">
+  <PublishBatchResult>
+    <Failed/>
+    <Successful>${responsesChunks[1].map((chunk, index) =>
+			`<member>
+        <MessageId>${randomUUID()}</MessageId>
+        <Id>${chunk.Id}</Id>
+      </member>`)
+		}
+    </Successful>
+  </PublishBatchResult>
+  <ResponseMetadata>
+    <RequestId>${randomUUID()}</RequestId>
+  </ResponseMetadata>
+</PublishBatchResponse>`);
+		const result = await client.publishMessageBatch({
+			PublishBatchRequestEntries: messages,
+			TopicArn: topicARN
+		});
+		t.same(result.Successful[0].Id, responsesChunks[0][0].Id);
+		t.same(result.Successful[10].Id, responsesChunks[1][0].Id);
+	});
+	await t.test("publishMessage batch multiple item w a failed message", async (t) => {
+		const { mockPool, client }  = t.context;
+		const messagBatch = {
+			PublishBatchRequestEntries: [ {
+				Id: randomUUID(),
+				Message: "Hello World!",
+			},
+				{
+					Id: randomUUID(),
+					Message: "Hello World!",
+				}],
+			TopicArn: topicARN
+		} as PublishBatchMessage;
+		mockPool.intercept({
+			path: "/",
+			method: "POST",
+			body: `PublishBatchRequestEntries.member.1.Id=${messagBatch.PublishBatchRequestEntries[0].Id}&PublishBatchRequestEntries.member.1.Message=Hello%20World%21&PublishBatchRequestEntries.member.2.Id=${messagBatch.PublishBatchRequestEntries[1].Id}&PublishBatchRequestEntries.member.2.Message=Hello%20World%21&TopicArn=arn%3Aaws%3Asns%3Aeu-central-1%3A000000000000%3Atest&Action=PublishBatch&Version=2010-03-31`
+		}).reply(200, `<PublishBatchResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">
+  <PublishBatchResult>
+    <Successful>
+      <member>
+        <MessageId>${randomUUID()}</MessageId>
+        <Id>${messagBatch.PublishBatchRequestEntries[0].Id}</Id>
+      </member>
+    </Successful>
+    <Failed>
+      <member>
+        <MessageId>${randomUUID()}</MessageId>
+        <Id>${messagBatch.PublishBatchRequestEntries[1].Id}</Id>
+      </member>
+	</Failed>
+  </PublishBatchResult>
+  <ResponseMetadata>
+    <RequestId>93313591-271d-50b4-a0ca-685d2fb07219</RequestId>
+  </ResponseMetadata>
+</PublishBatchResponse>`);
+		const result = await client.publishMessageBatch(messagBatch);
+		t.same(result.Successful[0].Id, messagBatch.PublishBatchRequestEntries[0].Id);
+		t.same(result.Failed[0].Id, messagBatch.PublishBatchRequestEntries[1].Id);
+	});
 	await t.test("publishMessage batch single item w string attribute", async (t) => {
 		const { mockPool, client }  = t.context;
 		const messagBatch = {
