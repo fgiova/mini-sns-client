@@ -64,6 +64,7 @@ await client.publishMessageBatch({
 MiniSNSClient(region: string, endpoint?: string, undiciOptions?: Pool.Options, signer?: Signer | SignerOptions)
 MiniSNSClient.publishMessage(message: PublishMessage): Promise<PublishMessageResult>
 MiniSNSClient.publishMessageBatch(message: PublishBatchMessage): Promise<PublishMessageBatchResult>
+MiniSNSClient.destroy(signer: boolean): Promise<boolean> // signer destroyer default true
 ```
 
 All types are defined in [schemas.ts](./src/schemas.ts) and are derived from the [AWS SNS API](https://docs.aws.amazon.com/sns/latest/api/API_Operations.html)

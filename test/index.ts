@@ -114,12 +114,10 @@ test("MiniSNSClient", { only: true }, async (t) => {
 	});
 	await t.test("publishMessage Using signer instance", async (t) => {
 		const { mockPool }  = t.context;
+		const signer = new Signer();
 		const client = new MiniSNSClient("eu-central-1", undefined, {
 			factory: () => mockPool
-		}, new Signer());
-		t.teardown(async () => {
-			await client.destroy();
-		});
+		}, signer);
 		const MessageId = randomUUID();
 		const message = {
 			Message: "Hello World!",
@@ -139,6 +137,8 @@ test("MiniSNSClient", { only: true }, async (t) => {
 </PublishResponse> `);
 		const result = await client.publishMessage(message);
 		t.same(result.MessageId, MessageId);
+		await t.resolves(client.destroy(false));
+		await t.resolves(signer.destroy());
 	});
 	await t.test("publishMessage Using signer options", async (t) => {
 		const { mockPool }  = t.context;

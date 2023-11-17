@@ -42,10 +42,10 @@ export class MiniSNSClient {
 		}
 	}
 
-	async destroy () {
+	async destroy (signer = true) {
 		return Promise.all([
 			this.pool.destroy(),
-			this.signer.destroy()
+			signer && this.signer.destroy() || true
 		]);
 	}
 
