@@ -9,6 +9,7 @@ import {
 	PublishResponse,
 	SNSActions
 } from "./schemas";
+import {randomUUID} from "crypto";
 
 export class MiniSNSClient {
 	private readonly topicSettings: {
@@ -58,8 +59,8 @@ export class MiniSNSClient {
 			if (value.DataType === "Binary" && value.BinaryValue) {
 				payload[`MessageAttributes.entry.${counter}.Value.BinaryValue`] = Buffer.from(value.BinaryValue as unknown as string).toString("base64");
 			}
-			else if (value.DataType === "String" && value.StringValue) {
-				payload[`MessageAttributes.entry.${counter}.Value.StringValue`] = value.StringValue;
+			else if (["String", "Number", "String.Array"].includes(value.DataType) && value.StringValue) {
+				payload[`MessageAttributes.entry.${counter}.Value.StringValue`] = `${value.StringValue}`;
 			}
 			counter++;
 		}
@@ -150,7 +151,20 @@ export class MiniSNSClient {
 		} as PublishResponse;
 	}
 
-	async publishMessageBatch (payload: PublishBatchMessage) {
+	private splitArrayMessages (messages: any[], maxItems = 10){
+		return messages.reduce((resultArray, item, index) => {
+			const chunkIndex = Math.floor(index/10);
+			/* c8 ignore next */
+			if(!item.Id) item.Id = randomUUID();
+			if(!resultArray[chunkIndex]) {
+				resultArray[chunkIndex] = []; // start a new chunk
+			}
+			resultArray[chunkIndex].push(item);
+
+			return resultArray;
+		}, []);
+	}
+	private async publishSingleMessageBatch (payload: PublishBatchMessage) {
 		const entries: Record<string, any> = {};
 		const messages: Record<string, any>[] = [];
 		for (const message of payload.PublishBatchRequestEntries) {
@@ -179,5 +193,24 @@ export class MiniSNSClient {
 		} as PublishBatchResponse;
 	}
 
+	async publishMessageBatch (payload: PublishBatchMessage) {
+		const messagesChunks = this.splitArrayMessages(payload.PublishBatchRequestEntries);
+		const responses = {} as PublishBatchResponse;
+		for(const messagesChunk of messagesChunks){
+			const responseChunk = await this.publishSingleMessageBatch({
+				TopicArn: payload.TopicArn,
+				PublishBatchRequestEntries: messagesChunk
+			});
+			if(responseChunk.Failed ) {
+				if(!responses.Failed) responses.Failed = [];
+				responses.Failed.push(...responseChunk.Failed);
+			}
+			if (responseChunk.Successful) {
+				if(!responses.Successful) responses.Successful = [];
+				responses.Successful.push(...responseChunk.Successful);
+			}
+		}
+		return responses;
+	}
 }
 export type * from "./schemas";
