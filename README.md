@@ -3,6 +3,8 @@
 [![NPM version](https://img.shields.io/npm/v/@fgiova/mini-sns-client.svg?style=flat)](https://www.npmjs.com/package/@fgiova/mini-sns-client)
 ![CI workflow](https://github.com/fgiova/mini-sns-client/actions/workflows/node.js.yml/badge.svg)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
+[![Maintainability](https://api.codeclimate.com/v1/badges/aa9fff681744154e08cd/maintainability)](https://codeclimate.com/github/fgiova/mini-sns-client/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/aa9fff681744154e08cd/test_coverage)](https://codeclimate.com/github/fgiova/mini-sns-client/test_coverage)
 
 ## Description
 This module allows minimal set of SNS service functions using "undici" as http agent.<br />

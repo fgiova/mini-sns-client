@@ -10,7 +10,8 @@
     "build": "tsc",
     "lint": "eslint 'src/**/*.ts'",
     "test": "tap",
-    "test:debug": "tap --only --timeout=0"
+    "test:debug": "tap --only --timeout=0",
+    "test:coverage": "tap --coverage-report=lcovonly --coverage-report=text"
   },
   "repository": {
     "type": "git",
