@@ -412,7 +412,6 @@ export interface BatchResultErrorEntry {
 	SenderFault: boolean | undefined;
 }
 
-
 export interface PublishBatchResponse {
 	/**
 	 * @public
