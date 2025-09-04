@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/fgiova/mini-sns-client/compare/1.2.0...1.3.0) (2025-09-04)
+
+
+### Features
+
+* update dependencies ([6b084ee](https://github.com/fgiova/mini-sns-client/commit/6b084eef0d06d7f117af402f786bcd1e76f92e0d))
+
 # [1.2.0](https://github.com/fgiova/mini-sns-client/compare/1.1.0...1.2.0) (2023-11-17)
 
 
