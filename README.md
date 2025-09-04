@@ -3,8 +3,9 @@
 [![NPM version](https://img.shields.io/npm/v/@fgiova/mini-sns-client.svg?style=flat)](https://www.npmjs.com/package/@fgiova/mini-sns-client)
 ![CI workflow](https://github.com/fgiova/mini-sns-client/actions/workflows/node.js.yml/badge.svg)
 [![TypeScript](https://img.shields.io/badge/%3C%2F%3E-TypeScript-%230074c1.svg)](http://www.typescriptlang.org/)
-[![Maintainability](https://api.codeclimate.com/v1/badges/aa9fff681744154e08cd/maintainability)](https://codeclimate.com/github/fgiova/mini-sns-client/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/aa9fff681744154e08cd/test_coverage)](https://codeclimate.com/github/fgiova/mini-sns-client/test_coverage)
+[![Linted with Biome](https://img.shields.io/badge/Linted_with-Biome-60a5fa?style=flat&logo=biome)](https://biomejs.dev)
+[![Maintainability](https://qlty.sh/gh/fgiova/projects/mini-sns-client/maintainability.svg)](https://qlty.sh/gh/fgiova/projects/mini-sns-client)
+[![Code Coverage](https://qlty.sh/gh/fgiova/projects/mini-sns-client/coverage.svg)](https://qlty.sh/gh/fgiova/projects/mini-sns-client)
 
 ## Description
 This module allows minimal set of SNS service functions using "undici" as http agent.<br />
@@ -21,7 +22,6 @@ npm install @fgiova/mini-sns-client
 
 ```typescript
 import {MiniSNSClient} from '@fgiova/mini-sns-client'
-import console = require("console");
 
 const client = new MiniSNSClient("eu-central-1");
 
@@ -65,7 +65,7 @@ await client.publishMessageBatch({
 ```typescript
 MiniSNSClient(region: string, endpoint?: string, undiciOptions?: Pool.Options, signer?: Signer | SignerOptions)
 MiniSNSClient.publishMessage(message: PublishMessage): Promise<PublishMessageResult>
-MiniSNSClient.publishMessageBatch(message: PublishBatchMessage): Promise<PublishMessageBatchResult>
+MiniSNSClient.publishMessageBatch(messages: PublishBatchMessage): Promise<PublishMessageBatchResult>
 MiniSNSClient.destroy(signer: boolean): Promise<boolean> // signer destroyer default true
 ```
 
