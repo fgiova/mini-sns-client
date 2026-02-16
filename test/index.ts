@@ -498,6 +498,42 @@ test("MiniSNSClient", { only: true }, async (t) => {
 		},
 	);
 	await t.test(
+		"publishMessage batch with non-member response content",
+		async (t) => {
+			const { mockPool, client } = t.context;
+			const messagBatch = {
+				PublishBatchRequestEntries: [
+					{
+						Id: randomUUID(),
+						Message: "Hello World!",
+					},
+				],
+				TopicArn: topicARN,
+			} as PublishBatchMessage;
+			mockPool
+				.intercept({
+					path: "/",
+					method: "POST",
+					body: `PublishBatchRequestEntries.member.1.Id=${messagBatch.PublishBatchRequestEntries?.[0].Id}&PublishBatchRequestEntries.member.1.Message=Hello%20World%21&TopicArn=arn%3Aaws%3Asns%3Aeu-central-1%3A000000000000%3Atest&Action=PublishBatch&Version=2010-03-31`,
+				})
+				.reply(
+					200,
+					`<PublishBatchResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">
+  <PublishBatchResult>
+    <Failed>unexpected_content</Failed>
+    <Successful>unexpected_content</Successful>
+  </PublishBatchResult>
+  <ResponseMetadata>
+    <RequestId>93313591-271d-50b4-a0ca-685d2fb07219</RequestId>
+  </ResponseMetadata>
+</PublishBatchResponse>`,
+				);
+			const result = await client.publishMessageBatch(messagBatch);
+			t.equal(result.Successful, undefined);
+			t.equal(result.Failed, undefined);
+		},
+	);
+	await t.test(
 		"publishMessage batch single item w string attribute",
 		async (t) => {
 			const { mockPool, client } = t.context;

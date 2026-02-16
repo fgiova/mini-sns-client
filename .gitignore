@@ -1,4 +1,4 @@
-te#Project rules
+#Project rules
 ormconfig.json
 
 # Logs
@@ -99,3 +99,4 @@ dist/
 .nyc_output/
 !/.env.dev
 /.tap/
+/.claude/
