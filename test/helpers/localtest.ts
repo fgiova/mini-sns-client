@@ -1,0 +1,51 @@
+import { readFileSync } from "node:fs";
+import { Socket } from "node:net";
+import path from "node:path";
+import dotenv from "dotenv";
+import tap from "tap";
+
+const defaultExport = () => {
+	dotenv.config({
+		path: ".env.dev",
+	});
+	if (!process.env.TEST_LOCAL) {
+		const jsonString = readFileSync(
+			path.resolve(process.cwd(), "test-env.json"),
+			{
+				encoding: "utf8",
+			},
+		);
+		try {
+			const envConfig = JSON.parse(jsonString);
+
+			for (const key in envConfig) {
+				process.env[key] = envConfig[key];
+			}
+		} catch (err) {
+			console.error(err);
+		}
+	}
+	if (process.env.REAPER) {
+		const [host, port] = process.env.REAPER.split(":");
+		const socket = new Socket();
+		socket.connect(Number(port), host, () => {
+			socket.write(
+				`label=org.testcontainers.session-id=${process.env.REAPER_SESSION_ID}\r\n`,
+			);
+		});
+		socket.on("error", (error) => {
+			console.log(error);
+		});
+
+		tap.teardown(() => {
+			setTimeout(() => {
+				socket.destroy();
+				// force kill the process if it doesn't stop on its own
+				setTimeout(() => {
+					process.exit(0);
+				}, 300);
+			}, 300);
+		});
+	}
+};
+defaultExport();

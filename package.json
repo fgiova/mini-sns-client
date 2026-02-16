@@ -24,9 +24,11 @@
 		"build": "esmBuilder",
 		"lint": "biome ci ./src ./test",
 		"fix": "biome check --write ./src ./test",
-		"test": "tap",
+		"test": "tap --timeout=90",
 		"test:debug": "tap --only --timeout=0",
-		"test:coverage": "tap --coverage-report=lcovonly --coverage-report=text"
+		"test:local": "TEST_LOCAL=true tap",
+		"test:local:debug": "TEST_LOCAL=true tap --only --timeout=0",
+		"test:coverage": "tap --timeout=90 --coverage-report=lcovonly --coverage-report=text"
 	},
 	"repository": {
 		"type": "git",
@@ -43,7 +45,13 @@
 		"access": "public"
 	},
 	"tap": {
-		"show-full-coverage": true
+		"show-full-coverage": true,
+		"before": "./test/scripts/executors/before.js",
+		"after": "./test/scripts/executors/teardown.js",
+		"exclude": [
+			"test/helpers/**/*",
+			"test/scripts/**/*"
+		]
 	},
 	"engines": {
 		"node": "^22.14.0 || >= 24.10.0"
@@ -51,9 +59,11 @@
 	"dependencies": {
 		"@fgiova/aws-signature": "^4.0.0",
 		"txml": "^5.1.1",
-		"undici": "^7.15.0"
+		"undici": "^7.18.2"
 	},
 	"devDependencies": {
+		"@aws-sdk/client-sns": "^3.821.0",
+		"@aws-sdk/client-sqs": "^3.821.0",
 		"@biomejs/biome": "2.2.2",
 		"@fgiova/cjs-esm-ts-builder": "^1.2.0",
 		"@semantic-release/changelog": "^6.0.3",
@@ -62,8 +72,10 @@
 		"@tsconfig/node22": "^22.0.5",
 		"@types/node": "^22.19.11",
 		"conventional-changelog-conventionalcommits": "^9.1.0",
+		"dotenv": "^16.5.0",
 		"semantic-release": "^25.0.3",
 		"tap": "^21.5.1",
+		"testcontainers": "^10.25.0",
 		"ts-node": "^10.9.2",
 		"typescript": "^5.2.2"
 	}

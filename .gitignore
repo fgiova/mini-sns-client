@@ -100,3 +100,5 @@ dist/
 !/.env.dev
 /.tap/
 /.claude/
+.plans/
+test-env.json
