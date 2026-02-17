@@ -12,7 +12,11 @@ This module allows minimal set of SNS service functions using "undici" as http a
 The @fgiova/aws-signature module is used for signing requests to optimize performance. <br />
 
 Are supported:
-- publish messages
+- publish single message
+- publish message batch (automatically splits batches larger than 10 items)
+
+## Requirements
+Node.js ^22.14.0 || >= 24.10.0
 
 ## Installation
 ```bash
@@ -64,9 +68,9 @@ await client.publishMessageBatch({
 
 ```typescript
 MiniSNSClient(region: string, endpoint?: string, undiciOptions?: Pool.Options, signer?: Signer | SignerOptions)
-MiniSNSClient.publishMessage(message: PublishMessage): Promise<PublishMessageResult>
-MiniSNSClient.publishMessageBatch(messages: PublishBatchMessage): Promise<PublishMessageBatchResult>
-MiniSNSClient.destroy(signer: boolean): Promise<boolean> // signer destroyer default true
+MiniSNSClient.publishMessage(message: PublishMessage): Promise<PublishResponse>
+MiniSNSClient.publishMessageBatch(messages: PublishBatchMessage): Promise<PublishBatchResponse>
+MiniSNSClient.destroy(signer?: boolean): Promise<[void, boolean | void]> // signer destroy default true
 ```
 
 All types are defined in [schemas.ts](./src/schemas.ts) and are derived from the [AWS SNS API](https://docs.aws.amazon.com/sns/latest/api/API_Operations.html)

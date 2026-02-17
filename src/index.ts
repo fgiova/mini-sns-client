@@ -115,6 +115,8 @@ export class MiniSNSClient {
 				return [response.member];
 			}
 		}
+
+		return undefined;
 	}
 
 	private async SNSRequest<B, R>(body: B, action: SNSActions) {
@@ -135,9 +137,10 @@ export class MiniSNSClient {
 			"sns",
 			region,
 		);
+
 		const response = await this.pool.request({
 			path: "/",
-			method: requestData.method,
+			method: requestData.method as "POST",
 			headers: {
 				"Content-Type": "application/x-www-form-urlencoded",
 				"Content-length": Buffer.byteLength(requestBody).toString(),
@@ -145,6 +148,7 @@ export class MiniSNSClient {
 			},
 			body: requestBody,
 		});
+
 		if (response.statusCode !== 200) {
 			let message = await response.body.text();
 			try {
