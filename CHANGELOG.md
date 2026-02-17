@@ -1,3 +1,10 @@
+# [2.0.0](https://github.com/fgiova/mini-sns-client/compare/1.3.0...2.0.0) (2026-02-17)
+
+
+### Features
+
+* add localstack integration and environment setup for testing ([af8f284](https://github.com/fgiova/mini-sns-client/commit/af8f28435861ab8edf1331ce3f58a8ac7051e62a))
+
 # [1.3.0](https://github.com/fgiova/mini-sns-client/compare/1.2.0...1.3.0) (2025-09-04)
 
 
