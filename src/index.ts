@@ -4,6 +4,7 @@ import {
 	Signer,
 	type SignerOptions,
 } from "@fgiova/aws-signature";
+import type { tNode } from "txml";
 import * as txml from "txml";
 import { Pool } from "undici";
 import type {
@@ -103,7 +104,10 @@ export class MiniSNSClient {
 	}
 
 	private parseResponse(response: string) {
-		return txml.simplify(txml.parse(response)) as Record<string, unknown>;
+		return txml.simplify(txml.parse(response) as tNode[]) as Record<
+			string,
+			unknown
+		>;
 	}
 
 	private parseBatchResponseResult(response: unknown) {

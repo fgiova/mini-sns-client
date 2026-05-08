@@ -57,9 +57,9 @@
 		"node": "^22.14.0 || >= 24.10.0"
 	},
 	"dependencies": {
-		"@fgiova/aws-signature": "^4.0.0",
-		"txml": "^5.1.1",
-		"undici": "^7.18.2"
+		"@fgiova/aws-signature": "^5.0.0",
+		"txml": "^5.2.1",
+		"undici": "^7.25.0"
 	},
 	"devDependencies": {
 		"@aws-sdk/client-sns": "^3.821.0",
